@@ -1,0 +1,14 @@
+{
+  "bookings": [
+    {
+      "booking_id": "BKG001",
+      "name": "Harsh",
+      "phone": "9876543210",
+      "date": "2025-11-20",
+      "time": "19:00",
+      "party_size": 4,
+      "special_request": "Window seat",
+      "created_at": "2025-11-15T13:40:00"
+    }
+  ]
+}

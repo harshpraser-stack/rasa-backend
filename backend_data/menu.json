@@ -1,0 +1,145 @@
+{
+  "today_thali": [
+    {"name": "Roti Thali", "price": 120, "description": "3 roti + dal + sabji + raita + salad + rice"},
+    {"name": "Veg Thali", "price": 140, "description": "3 roti + dal + sabji + jeera rice + raita + salad"},
+    {"name": "Rajma Thali", "price": 150, "description": "3 roti + sabji + rajma + dal + rice + salad + raita"},
+    {"name": "Chole Masala Thali", "price": 150, "description": "3 roti + sabji + masala chole + dal + raita + salad + rice"},
+    {"name": "Paneer Thali", "price": 160, "description": "3 roti + dal + jeera aloo + paneer + rice + raita + salad"}
+  ],
+
+  "special_sabji": [
+    {"name": "Dal Fry", "price": 150},
+    {"name": "Jerr Aloo", "price": 140},
+    {"name": "Dal Tarda", "price": 160},
+    {"name": "Aloo Matar", "price": 160},
+    {"name": "Shev Tomato", "price": 150},
+    {"name": "Mix Veg", "price": 160},
+    {"name": "Besan Gatta", "price": 160},
+    {"name": "Paneer Bhurji", "price": 200},
+    {"name": "Paneer Pyaza", "price": 200},
+    {"name": "Paneer Butter Masala", "price": 180},
+    {"name": "Paneer Masala", "price": 180},
+    {"name": "Palak Paneer", "price": 180},
+    {"name": "Kadai Paneer", "price": 180},
+    {"name": "Paneer Kolhapur", "price": 180},
+    {"name": "Paneer Handi", "price": 200},
+    {"name": "Mushroom Masala", "price": 160},
+    {"name": "Mushroom Aloo Sala", "price": 160},
+    {"name": "Mushroom Kadai", "price": 170},
+    {"name": "Mushroom Kolhapur", "price": 170},
+    {"name": "Matter Paneer", "price": 170}
+  ],
+
+  "chinese_noodles": [
+    {"name": "Veg Noodles", "price": 110},
+    {"name": "Veg Schezwan Noodles", "price": 120},
+    {"name": "Veg Manchurian Noodles", "price": 160},
+    {"name": "Veg Singapore Noodles", "price": 130},
+    {"name": "Veg Hong Kong Noodles", "price": 150},
+    {"name": "Veg Triple Noodles", "price": 170},
+    {"name": "Veg Chopper Noodles", "price": 170},
+    {"name": "Veg Paneer Noodles", "price": 150},
+    {"name": "Paneer Chilly Noodles", "price": 160},
+    {"name": "Paneer Schezwan Noodles", "price": 150}
+  ],
+
+  "chinese_combo": [
+    {"name": "Veg Combo", "price": 250, "description": "Rice + Soup + Starter + Noodles"},
+    {"name": "Paneer Combo", "price": 280, "description": "Rice + Soup + Starter + Gravy"}
+  ],
+
+  "hot_and_cold": [
+    {"name": "Masala Tea", "price": 20},
+    {"name": "Masala Buttermilk", "price": 30},
+    {"name": "Sweet Lassi", "price": 50},
+    {"name": "Salt Lassi", "price": 50}
+  ],
+
+  "extra": [
+    {"name": "Butter Roti", "price": 15},
+    {"name": "Curd", "price": 30},
+    {"name": "Butter", "price": 10},
+    {"name": "Puri (2 pieces)", "price": 20},
+    {"name": "Plain Rice", "price": 50},
+    {"name": "Churma", "price": 30},
+    {"name": "Bati", "price": 20},
+    {"name": "Extra Dal", "price": 20},
+    {"name": "Extra Sabji", "price": 20}
+  ],
+
+  "stuff_paratha": [
+    {"name": "Plain Paratha", "price": 40},
+    {"name": "Jeera Masala Paratha", "price": 50},
+    {"name": "Sweet Paratha", "price": 50},
+    {"name": "Aloo Paratha", "price": 100},
+    {"name": "Methi Paratha", "price": 100},
+    {"name": "Onion Paratha", "price": 100},
+    {"name": "Gobi Paratha", "price": 110},
+    {"name": "Mix Veg Paratha", "price": 110},
+    {"name": "Moong Dal Paratha", "price": 110},
+    {"name": "Garlic Paratha", "price": 110},
+    {"name": "Green Peas Paratha", "price": 120},
+    {"name": "Sattu Paratha", "price": 120},
+    {"name": "Namkeen Sev Paratha", "price": 110},
+    {"name": "Paneer Paratha", "price": 120},
+    {"name": "Cheese Paratha", "price": 150}
+  ],
+
+  "premium_paratha": [
+    {"name": "Aloo Onion Paratha", "price": 110},
+    {"name": "Aloo Methi Mix", "price": 110},
+    {"name": "Aloo Onion Methi Mix", "price": 110},
+    {"name": "Aloo Onion Garlic Mix", "price": 120},
+    {"name": "Mix Veg Garlic Mix", "price": 120},
+    {"name": "Aloo Methi Garlic Mix", "price": 120},
+    {"name": "Namkin Sev Onion", "price": 120},
+    {"name": "Aloo Gobi Onion Mix", "price": 120},
+    {"name": "Aloo Paneer Mix", "price": 120},
+    {"name": "Cheese Chilly", "price": 150},
+    {"name": "Cheese Paneer Mix", "price": 150},
+    {"name": "Shahi Paratha", "price": 150},
+    {"name": "Aloo Cheese Mix", "price": 150},
+    {"name": "Cocaine Paratha", "price": 150},
+    {"name": "Aloo Onion Cheese Mix", "price": 150}
+  ],
+
+  "chinese_starters": [
+    {"name": "Veg Manchurian (Dry/Gravy)", "price": 120},
+    {"name": "Schezwan Manchurian (Dry/Gravy)", "price": 130},
+    {"name": "Gobi Manchurian (Dry/Gravy)", "price": 120},
+    {"name": "Paneer Manchurian", "price": 150},
+    {"name": "Paneer Chilly", "price": 150},
+    {"name": "Paneer 65", "price": 150},
+    {"name": "Paneer Crispy", "price": 180},
+    {"name": "Paneer Pepper Dry", "price": 130},
+    {"name": "Paneer Schezwan Dry", "price": 130},
+    {"name": "Mushroom Manchurian", "price": 160},
+    {"name": "Mushroom 65", "price": 160},
+    {"name": "Mushroom Pepper Dry", "price": 160},
+    {"name": "Mushroom Schezwan Dry", "price": 160},
+    {"name": "Mushroom Chilly", "price": 160},
+    {"name": "Baby Corn Manchurian", "price": 150},
+    {"name": "Baby Corn 65", "price": 150},
+    {"name": "Baby Corn Chilly Dry", "price": 150}
+  ],
+
+  "chinese_soup": [
+    {"name": "Veg Manchow Soup", "price": 80},
+    {"name": "Veg Clear Soup", "price": 80},
+    {"name": "Veg Hot & Sour Soup", "price": 80},
+    {"name": "Tomato Soup", "price": 80},
+    {"name": "Royal Soup", "price": 90}
+  ],
+
+  "chinese_rice": [
+    {"name": "Veg Fried Rice", "price": 110},
+    {"name": "Schezwan Fried Rice", "price": 120},
+    {"name": "Hong Kong Rice", "price": 130},
+    {"name": "Singapore Rice", "price": 130},
+    {"name": "Manchurian Rice with Gravy", "price": 160},
+    {"name": "Veg Triple Rice", "price": 170},
+    {"name": "Veg Chopper Rice", "price": 140},
+    {"name": "Paneer Fried Rice", "price": 160},
+    {"name": "Paneer Chilli Rice", "price": 160}
+  ]
+}

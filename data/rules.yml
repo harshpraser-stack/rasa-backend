@@ -1,0 +1,15 @@
+version: "3.1"
+rules:
+- rule: Activate booking form
+  steps:
+  - intent: book_table
+  - action: booking_form
+  - active_loop: booking_form
+
+- rule: Submit booking form
+  condition:
+  - active_loop: booking_form
+  steps:
+  - action: booking_form
+  - active_loop: null
+  - action: action_save_booking
