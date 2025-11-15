@@ -1,0 +1,83 @@
+version: "3.1"
+
+nlu:
+
+- intent: greet
+  examples: |
+    - hi
+    - hello
+    - hey
+    - good morning
+    - good evening
+    - hello there
+
+- intent: goodbye
+  examples: |
+    - bye
+    - goodbye
+    - see you
+    - catch you later
+
+- intent: show_menu
+  examples: |
+    - menu
+    - show me the menu
+    - what do you have?
+    - menu please
+    - can I see the menu?
+
+- intent: ask_price
+  examples: |
+    - what is the price of [paneer butter masala](dish_name)?
+    - how much is [veg biryani](dish_name)?
+    - cost of [dal chawal](dish_name)?
+
+- intent: ask_location
+  examples: |
+    - where is the restaurant?
+    - share location
+    - what is your address?
+    - send me the map link
+
+- intent: ask_info
+  examples: |
+    - info
+    - information
+    - tell me about the restaurant
+    - what kind of food do you serve?
+    - give me information
+
+- intent: book_table
+  examples: |
+    - booking
+    - reservation
+    - reserve
+    - I want to book a table
+    - table booking
+    - reserve a table
+    - I need a reservation
+
+- intent: inform
+  examples: |
+    - my name is [Rahul](name)
+    - book for [4](party_size) people
+    - I want at [7 pm](time)
+    - date is [20/11/2025](date)
+    - number is [9876543210](phone)
+    - no special request
+    - [birthday decoration](special_request)
+
+- intent: affirm
+  examples: |
+    - yes
+    - yeah
+    - ok
+    - correct
+    - yup
+
+- intent: deny
+  examples: |
+    - no
+    - nope
+    - don’t
+    - not needed

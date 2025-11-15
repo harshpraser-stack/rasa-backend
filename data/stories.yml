@@ -1,0 +1,38 @@
+version: "3.1"
+
+stories:
+
+- story: greet user
+  steps:
+    - intent: greet
+    - action: utter_greet
+
+- story: show menu
+  steps:
+    - intent: show_menu
+    - action: action_show_menu
+    - action: utter_menu_summary
+
+- story: ask location
+  steps:
+    - intent: ask_location
+    - action: action_location
+
+- story: ask info
+  steps:
+    - intent: ask_info
+    - action: utter_additional_info
+
+- story: book table with form
+  steps:
+    - intent: book_table
+    - action: booking_form
+    - active_loop: booking_form
+    - active_loop: null
+    - action: action_save_booking
+    - action: utter_confirm_booking
+
+- story: say goodbye
+  steps:
+    - intent: goodbye
+    - action: utter_goodbye
