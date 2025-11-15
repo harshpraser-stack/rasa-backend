@@ -6,10 +6,12 @@ rules:
   - action: booking_form
   - active_loop: booking_form
 
+
 - rule: Submit booking form
   condition:
-  - active_loop: booking_form
+    - active_loop: booking_form
   steps:
-  - action: booking_form
-  - active_loop: null
-  - action: action_save_booking
+    - action: booking_form
+    - active_loop: null
+    - action: action_save_booking
+    - action: utter_confirm_booking

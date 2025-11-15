@@ -1,9 +1,10 @@
 # actions/actions.py
 import os
 import json
+import random
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Text,Optional
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
@@ -156,55 +157,51 @@ class action_show_menu(Action):
         dispatcher.utter_message(text="You can ask for details or ask the price of any dish, e.g., 'price of Roti Thali'.")
         return []
 
-class action_save_booking(Action):
-    def name(self) -> str:
+class ActionSaveBooking(Action):
+    def name(self) -> Text:
         return "action_save_booking"
 
-    def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict) -> List[Dict]:
-        name = tracker.get_slot("name") or tracker.get_slot("customer_name") or "Guest"
-        phone = tracker.get_slot("phone") or ""
-        date_slot = tracker.get_slot("date") or ""  # assumed normalized YYYY-MM-DD
-        time_slot = tracker.get_slot("time") or ""  # HH:MM
-        party_size = tracker.get_slot("party_size") or ""
-        special = tracker.get_slot("special_request") or tracker.get_slot("note") or ""
+    async def run(
+        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict
+    ) -> List[Dict[Text, Any]]:
 
-        bookings_data = load_bookings()
-        bookings_list = bookings_data.get("bookings", [])
+        # gather slots
+        name = tracker.get_slot("name")
+        phone = tracker.get_slot("phone")
+        date = tracker.get_slot("date")
+        time = tracker.get_slot("time")
+        party_size = tracker.get_slot("party_size")
+        special_request = tracker.get_slot("special_request") or "None"
 
+        # create a booking id (simple)
+        booking_id = f"BKG{random.randint(1000,9999)}"
 
-        booking_id = "BKG-" + uuid.uuid4().hex[:8].upper()
-        created_at = datetime.now().isoformat(timespec="seconds")
-
-        booking = {
+        booking_record = {
             "booking_id": booking_id,
             "name": name,
             "phone": phone,
-            "date": date_slot,
-            "time": time_slot,
+            "date": date,
+            "time": time,
             "party_size": party_size,
-            "special_request": special,
-            "created_at": created_at,
+            "special_request": special_request
         }
 
-        bookings_list.append(booking)
-        bookings_data["bookings"] = bookings_list
-
+        # append to bookings file
         try:
-            atomic_write_json(BOOKINGS_FILE, bookings_data)
+            with open(BOOKINGS_FILE, "r", encoding="utf-8") as f:
+                bookings = json.load(f)
         except Exception:
-            dispatcher.utter_message(text="Sorry, I couldn't save your booking due to a technical issue. Please try again.")
-            return []
+            bookings = []
 
-        confirm_text = (
-            f"Thank you {name}! Your table for {party_size} on {date_slot} at {time_slot} is booked.\n"
-            f"Booking ID: {booking_id}"
-        )
-        dispatcher.utter_message(text=confirm_text)
+        bookings.append(booking_record)
+        with open(BOOKINGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(bookings, f, indent=2, ensure_ascii=False)
 
-        # set slot(s) for downstream use
+        # utter confirmation (rule will call utter_confirm_booking too, but safe to set slots)
+        dispatcher.utter_message(text=f"Saved booking {booking_id} for {name}.")
+
+        # return slots (so utter_confirm_booking can use them)
         return [SlotSet("booking_confirmed", True), SlotSet("booking_id", booking_id)]
-
-
 
 class action_location(Action):
     def name(self) -> str:

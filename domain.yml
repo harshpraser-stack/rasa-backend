@@ -98,6 +98,9 @@ responses:
     - text: "Our address is 123 Example Street, MyCity. Want a Google Maps link?"
   utter_additional_info:
     - text: "We are open daily 07:30–01:30. Call 2 hours before to cancel."
+  utter_confirm_booking:
+    - text: "Thanks {name}! Your booking is confirmed for {date} at {time} for {party_size} people. Your booking id is {booking_id}. We will call you at {phone} if needed."
+
 
 actions:
   - action_show_menu
