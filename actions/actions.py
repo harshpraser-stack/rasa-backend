@@ -2,14 +2,18 @@
 import os
 import json
 import random
-import uuid
+import logging
 from datetime import datetime
-from typing import Any, Dict, List, Text,Optional
+from typing import Any, Dict, List, Text, Optional
 
+from twilio.rest import Client
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
 
+# configure logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 CURRENT_DIR = os.path.dirname(__file__)
 BACKEND_DATA_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "backend_data"))
@@ -18,7 +22,7 @@ BOOKINGS_FILE = os.path.join(BACKEND_DATA_DIR, "bookings.json")
 
 
 def ensure_backend_dirs() -> None:
-   if not os.path.isdir(BACKEND_DATA_DIR):
+    if not os.path.isdir(BACKEND_DATA_DIR):
         os.makedirs(BACKEND_DATA_DIR, exist_ok=True)
 
 
@@ -39,7 +43,6 @@ def load_menu_grouped() -> Dict[str, List[Dict[str, Any]]]:
             if isinstance(data, dict):
                 return data
             elif isinstance(data, list):
-                # if someone stored a flat list, put it under 'menu'
                 return {"menu": data}
     except Exception:
         return {}
@@ -82,12 +85,10 @@ def load_bookings() -> Dict[str, Any]:
             data = json.load(f)
             if isinstance(data, dict) and "bookings" in data:
                 return data
-            # if unexpected shape, reset
             base = {"bookings": []}
             atomic_write_json(BOOKINGS_FILE, base)
             return base
     except Exception:
-        # on error, back up and create fresh
         try:
             os.rename(BOOKINGS_FILE, BOOKINGS_FILE + ".bak")
         except Exception:
@@ -95,6 +96,7 @@ def load_bookings() -> Dict[str, Any]:
         base = {"bookings": []}
         atomic_write_json(BOOKINGS_FILE, base)
         return base
+
 
 class action_show_menu(Action):
     def name(self) -> str:
@@ -105,7 +107,6 @@ class action_show_menu(Action):
         if not grouped:
             dispatcher.utter_message(text="Sorry, the menu is not available right now.")
             return []
-
 
         lines: List[str] = []
         for cat_key, items in grouped.items():
@@ -157,24 +158,55 @@ class action_show_menu(Action):
         dispatcher.utter_message(text="You can ask for details or ask the price of any dish, e.g., 'price of Roti Thali'.")
         return []
 
+
+def _normalize_phone_to_e164(phone_raw: str) -> str:
+    """
+    Convert a user-provided phone string into an E.164-like string.
+    Heuristics:
+      - if phone starts with '+', keep plus and digits
+      - otherwise extract digits; if length == 10 -> assume India and prefix +91
+      - if digits start with '91' and length >= 11 -> prefix '+'
+      - otherwise prefix '+' (best-effort)
+    """
+    if not phone_raw:
+        return ""
+    s = str(phone_raw).strip()
+    if s.startswith("+"):
+        # allow +91..., or other international numbers
+        return "+" + "".join(ch for ch in s if ch.isdigit())
+    digits = "".join(ch for ch in s if ch.isdigit())
+    # strip leading zeros
+    while digits.startswith("0"):
+        digits = digits[1:]
+    if len(digits) == 10:
+        return "+91" + digits
+    if digits.startswith("91") and len(digits) >= 11:
+        return "+" + digits
+    # fallback
+    return "+" + digits
+
+
 class ActionSaveBooking(Action):
     def name(self) -> Text:
         return "action_save_booking"
 
-    async def run(
-        self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict
-    ) -> List[Dict[Text, Any]]:
+    async def run(self,
+                  dispatcher: CollectingDispatcher,
+                  tracker: Tracker,
+                  domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-        # gather slots
-        name = tracker.get_slot("name")
-        phone = tracker.get_slot("phone")
-        date = tracker.get_slot("date")
-        time = tracker.get_slot("time")
-        party_size = tracker.get_slot("party_size")
-        special_request = tracker.get_slot("special_request") or "None"
+        ensure_backend_dirs()
 
-        # create a booking id (simple)
-        booking_id = f"BKG{random.randint(1000,9999)}"
+        # read slots (they may be None if not provided)
+        name = tracker.get_slot("name") or ""
+        phone = tracker.get_slot("phone") or ""
+        date = tracker.get_slot("date") or ""
+        time = tracker.get_slot("time") or ""
+        party_size = tracker.get_slot("party_size") or ""
+        special_request = tracker.get_slot("special_request") or ""
+
+        # generate booking id
+        booking_id = f"BKG{random.randint(1000, 9999)}"
 
         booking_record = {
             "booking_id": booking_id,
@@ -186,22 +218,69 @@ class ActionSaveBooking(Action):
             "special_request": special_request
         }
 
-        # append to bookings file
+        # Load existing bookings safely (expecting dict with "bookings": [])
         try:
             with open(BOOKINGS_FILE, "r", encoding="utf-8") as f:
-                bookings = json.load(f)
-        except Exception:
+                bookings_data = json.load(f)
+        except (json.JSONDecodeError, FileNotFoundError):
+            bookings_data = {"bookings": []}
+
+        if isinstance(bookings_data, dict) and "bookings" in bookings_data and isinstance(bookings_data["bookings"], list):
+            bookings = bookings_data["bookings"]
+        else:
             bookings = []
 
         bookings.append(booking_record)
-        with open(BOOKINGS_FILE, "w", encoding="utf-8") as f:
-            json.dump(bookings, f, indent=2, ensure_ascii=False)
+        atomic_write_json(BOOKINGS_FILE, {"bookings": bookings})
 
-        # utter confirmation (rule will call utter_confirm_booking too, but safe to set slots)
+        # Inform the chat
         dispatcher.utter_message(text=f"Saved booking {booking_id} for {name}.")
 
-        # return slots (so utter_confirm_booking can use them)
-        return [SlotSet("booking_confirmed", True), SlotSet("booking_id", booking_id)]
+        # --- send SMS via Twilio ---
+        # Twilio credentials must be set in environment variables:
+        # TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
+        account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+        auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+        from_number = os.environ.get("TWILIO_FROM_NUMBER")  # e.g. "+1XXXXXXXXXX" or "+91XXXXXXXXXX"
+
+        sms_body = (
+            f"Hi {name}, your table is booked!\n"
+            f"Booking ID: {booking_id}\n"
+            f"Date: {date}\n"
+            f"Time: {time}\n"
+            f"Party size: {party_size}\n"
+            f"- Thank you"
+        )
+
+        if account_sid and auth_token and from_number:
+            to_number = _normalize_phone_to_e164(phone)
+            try:
+                client = Client(account_sid, auth_token)
+                message = client.messages.create(
+                    body=sms_body,
+                    from_=from_number,
+                    to=to_number,
+                )
+                logger.info(f"Twilio SMS sent: sid={getattr(message, 'sid', None)} to={to_number}")
+            except Exception as e:
+                logger.exception("Failed to send SMS via Twilio:")
+                # don't fail the action if SMS fails; inform user in chat optionally
+                dispatcher.utter_message(text="(Warning) Confirmation SMS could not be sent.")
+        else:
+            logger.info("Twilio credentials or from number not set - skipping SMS send.")
+
+        # Return slot updates so utter_confirm_booking can access them
+        return [
+            SlotSet("booking_confirmed", True),
+            SlotSet("booking_id", booking_id),
+            SlotSet("name", name),
+            SlotSet("phone", phone),
+            SlotSet("date", date),
+            SlotSet("time", time),
+            SlotSet("party_size", party_size),
+            SlotSet("special_request", special_request)
+        ]
+
 
 class action_location(Action):
     def name(self) -> str:
@@ -220,14 +299,14 @@ class action_location(Action):
         dispatcher.utter_message(text=msg)
         return []
 
+
 class action_additional_info(Action):
     def name(self) -> str:
         return "action_additional_info"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict) -> List[Dict]:
-        # Edit or expand as needed
         hours = "Daily 07:30 AM - 01:30 AM (next day)"
-        cancellation = "no cancellation availabe"
+        cancellation = "no cancellation available"
         payment = "We accept cash and digital payments (UPI, cards)."
         parking = "Limited parking available near the restaurant."
 

@@ -1,0 +1,25 @@
+{
+  "lookup": {
+    "rules": {
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"book_table\"}}]": "booking_form",
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}, \"user\": {\"intent\": \"book_table\"}}, {\"active_loop\": {\"name\": \"booking_form\"}, \"prev_action\": {\"action_name\": \"booking_form\"}, \"user\": {\"intent\": \"book_table\"}}]": "action_listen",
+      "[{\"active_loop\": {\"name\": \"should_not_be_set\"}, \"prev_action\": {\"action_name\": \"booking_form\"}}]": "action_save_booking",
+      "[{\"active_loop\": {\"name\": \"should_not_be_set\"}, \"prev_action\": {\"action_name\": \"booking_form\"}}, {\"active_loop\": {\"name\": \"should_not_be_set\"}, \"prev_action\": {\"action_name\": \"action_save_booking\"}}]": "utter_confirm_booking",
+      "[{\"active_loop\": {\"name\": \"should_not_be_set\"}, \"prev_action\": {\"action_name\": \"booking_form\"}}, {\"active_loop\": {\"name\": \"should_not_be_set\"}, \"prev_action\": {\"action_name\": \"action_save_booking\"}}, {\"active_loop\": {\"name\": \"should_not_be_set\"}, \"prev_action\": {\"action_name\": \"utter_confirm_booking\"}}]": "action_listen"
+    },
+    "rule_only_slots": [],
+    "rule_only_loops": [
+      "booking_form"
+    ],
+    "rules_for_loop_unhappy_path": {
+      "[{\"prev_action\": {\"action_name\": \"action_listen\"}}, {\"active_loop\": {\"name\": \"booking_form\"}, \"prev_action\": {\"action_name\": \"booking_form\"}, \"user\": {\"intent\": \"book_table\"}}]": "do_not_predict_loop_action"
+    },
+    "rules_not_in_stories": [
+      "handling active loops and forms - booking_form",
+      "predicting default action with intent session_start",
+      "predicting default action with intent restart",
+      "handling active loops and forms - booking_form - action_listen",
+      "predicting default action with intent back"
+    ]
+  }
+}

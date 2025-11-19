@@ -1,0 +1,83 @@
+{
+  "type": "MaxHistoryTrackerFeaturizer",
+  "state_featurizer": {
+    "action_texts": [],
+    "entity_tag_specs": [],
+    "feature_states": {
+      "intent": {
+        "affirm": 0,
+        "ask_info": 1,
+        "ask_location": 2,
+        "ask_price": 3,
+        "back": 4,
+        "book_table": 5,
+        "deny": 6,
+        "goodbye": 7,
+        "greet": 8,
+        "inform": 9,
+        "nlu_fallback": 10,
+        "out_of_scope": 11,
+        "restart": 12,
+        "session_start": 13,
+        "show_menu": 14
+      },
+      "action_name": {
+        "action_listen": 0,
+        "action_restart": 1,
+        "action_session_start": 2,
+        "action_default_fallback": 3,
+        "action_deactivate_loop": 4,
+        "action_revert_fallback_events": 5,
+        "action_default_ask_affirmation": 6,
+        "action_default_ask_rephrase": 7,
+        "action_two_stage_fallback": 8,
+        "action_unlikely_intent": 9,
+        "action_back": 10,
+        "...": 11,
+        "action_extract_slots": 12,
+        "action_show_menu": 13,
+        "action_save_booking": 14,
+        "action_location": 15,
+        "action_additional_info": 16,
+        "utter_additional_info": 17,
+        "utter_ask_date": 18,
+        "utter_ask_name": 19,
+        "utter_ask_party_size": 20,
+        "utter_ask_phone": 21,
+        "utter_ask_special_request": 22,
+        "utter_ask_time": 23,
+        "utter_confirm_booking": 24,
+        "utter_goodbye": 25,
+        "utter_greet": 26,
+        "utter_location": 27,
+        "utter_menu_summary": 28,
+        "booking_form": 29
+      },
+      "entities": {
+        "date": 0,
+        "dish_name": 1,
+        "name": 2,
+        "party_size": 3,
+        "phone": 4,
+        "special_request": 5,
+        "time": 6
+      },
+      "slots": {
+        "name_0": 0,
+        "phone_0": 1,
+        "date_0": 2,
+        "time_0": 3,
+        "party_size_0": 4,
+        "special_request_0": 5,
+        "booking_confirmed_0": 6,
+        "booking_confirmed_1": 7,
+        "booking_id_0": 8
+      },
+      "active_loop": {
+        "booking_form": 0
+      }
+    }
+  },
+  "remove_duplicates": true,
+  "max_history": 5
+}

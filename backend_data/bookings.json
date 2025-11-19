@@ -1,14 +1,31 @@
 {
   "bookings": [
     {
-      "booking_id": "BKG001",
-      "name": "Harsh",
-      "phone": "9876543210",
-      "date": "2025-11-20",
-      "time": "19:00",
-      "party_size": 4,
-      "special_request": "Window seat",
-      "created_at": "2025-11-15T13:40:00"
+      "booking_id": "BKG6605",
+      "name": "harsh parasar",
+      "phone": "8789984965",
+      "date": "2025-12-12",
+      "time": "17:30",
+      "party_size": 5,
+      "special_request": "no"
+    },
+    {
+      "booking_id": "BKG7908",
+      "name": "harsh parasar",
+      "phone": "8789984965",
+      "date": "2025-12-12",
+      "time": "16:30",
+      "party_size": 5,
+      "special_request": "no"
+    },
+    {
+      "booking_id": "BKG8222",
+      "name": "harsh parasar",
+      "phone": "8296104117",
+      "date": "2025-12-12",
+      "time": "16:30",
+      "party_size": 5,
+      "special_request": "no"
     }
   ]
 }

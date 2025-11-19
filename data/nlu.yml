@@ -66,6 +66,10 @@ nlu:
     - number is [9876543210](phone)
     - no special request
     - [birthday decoration](special_request)
+    - my phone number is [9876543210](phone)
+    - on [20/11/2025](date)
+    - at [19:30](time)
+    - for [4](party_size) people
 
 - intent: affirm
   examples: |
