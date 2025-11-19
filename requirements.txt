@@ -1,0 +1,4 @@
+rasa==3.6.21
+rasa-sdk==3.6.2
+twilio==8.2.2
+requests
