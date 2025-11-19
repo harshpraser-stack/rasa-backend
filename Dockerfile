@@ -23,4 +23,4 @@ COPY . .
 EXPOSE 5005 5055
 
 # default command — override in Render startCommand
-CMD ["bash", "-lc", "rasa run --enable-api --cors \"*\" --port 5005"]
+CMD ["bash", "-lc", "PORT=${PORT:-5005}; echo \"Starting Rasa on port $PORT\"; rasa run --enable-api --cors \"*\" --port $PORT --log-file out.log"]
