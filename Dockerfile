@@ -5,23 +5,23 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# system deps — small set
+# System deps
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential curl git \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-# copy and install python deps
+# Copy requirements
 COPY requirements.txt .
+
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 
-# copy project
+# Copy everything
 COPY . .
 
-# expose both ports (Render will map the public PORT)
+# Make sure Render passes its PORT
+EXPOSE 8000
 
-
-# default command — override in Render startCommand
-CMD ["bash", "-lc", "rasa run --enable-api --cors \"*\" --port $PORT"]
-
+# Render will set $PORT automatically
+CMD ["bash", "-lc", "rasa run --enable-api --cors \"*\" --model models --port $PORT"]
