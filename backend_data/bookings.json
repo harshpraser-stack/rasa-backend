@@ -26,6 +26,15 @@
       "time": "16:30",
       "party_size": 5,
       "special_request": "no"
+    },
+    {
+      "booking_id": "BKG6429",
+      "name": "arvind",
+      "phone": "8789984965",
+      "date": "2025-12-12",
+      "time": "16:30",
+      "party_size": 5,
+      "special_request": "no"
     }
   ]
 }
