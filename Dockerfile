@@ -24,4 +24,6 @@ COPY . .
 EXPOSE 8000
 
 # Use shell form so ${PORT} expands correctly
-CMD bash -lc "rasa run --enable-api --cors '*' --model models --port ${PORT}"
+# Use shell form and provide a fallback default (10000)
+CMD bash -lc "rasa run --enable-api --cors '*' --model models --port ${PORT:-10000}"
+
