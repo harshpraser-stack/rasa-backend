@@ -17,11 +17,11 @@ COPY requirements.txt .
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 
-# Copy everything
+# Copy project
 COPY . .
 
-# Make sure Render passes its PORT
+# Render exposes this port
 EXPOSE 8000
 
-# Render will set $PORT automatically
-CMD ["bash", "-lc", "rasa run --enable-api --cors \"*\" --model models --port $PORT"]
+# Use shell form so ${PORT} expands correctly
+CMD bash -lc "rasa run --enable-api --cors '*' --model models --port ${PORT}"
