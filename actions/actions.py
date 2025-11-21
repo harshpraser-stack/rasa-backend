@@ -6,7 +6,12 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Text, Optional
 
-from twilio.rest import Client
+# Twilio is optional: we import at runtime so actions still run when twilio is absent
+try:
+    from twilio.rest import Client as TwilioClient
+except Exception:
+    TwilioClient = None
+
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
@@ -14,6 +19,12 @@ from rasa_sdk.events import SlotSet
 # configure logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s - %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
 CURRENT_DIR = os.path.dirname(__file__)
 BACKEND_DATA_DIR = os.path.abspath(os.path.join(CURRENT_DIR, "..", "backend_data"))
@@ -42,9 +53,10 @@ def load_menu_grouped() -> Dict[str, List[Dict[str, Any]]]:
             data = json.load(f)
             if isinstance(data, dict):
                 return data
-            elif isinstance(data, list):
+            if isinstance(data, list):
                 return {"menu": data}
     except Exception:
+        logger.exception("Failed to load menu.json")
         return {}
     return {}
 
@@ -75,6 +87,7 @@ def find_menu_item_by_name(name: str) -> Optional[Dict[str, Any]]:
 
 
 def load_bookings() -> Dict[str, Any]:
+    """Return dict with key 'bookings' -> list."""
     ensure_backend_dirs()
     if not os.path.exists(BOOKINGS_FILE):
         base = {"bookings": []}
@@ -83,12 +96,17 @@ def load_bookings() -> Dict[str, Any]:
     try:
         with open(BOOKINGS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-            if isinstance(data, dict) and "bookings" in data:
+            if isinstance(data, dict) and "bookings" in data and isinstance(data["bookings"], list):
                 return data
+            if isinstance(data, list):
+                # convert legacy list -> new dict shape
+                return {"bookings": data}
+            # unexpected shape: reset safely
             base = {"bookings": []}
             atomic_write_json(BOOKINGS_FILE, base)
             return base
     except Exception:
+        logger.exception("Failed to read bookings file; creating fresh file.")
         try:
             os.rename(BOOKINGS_FILE, BOOKINGS_FILE + ".bak")
         except Exception:
@@ -98,7 +116,32 @@ def load_bookings() -> Dict[str, Any]:
         return base
 
 
-class action_show_menu(Action):
+def save_bookings(bookings_list: List[Dict[str, Any]]) -> None:
+    atomic_write_json(BOOKINGS_FILE, {"bookings": bookings_list})
+
+
+def _normalize_digits(text: Text) -> Text:
+    return "".join(ch for ch in (text or "") if ch.isdigit())
+
+
+def _format_phone_for_send(digits: str) -> str:
+    """Return E.164-ish phone for Twilio send if possible.
+    - if digits length == 10: assume India (+91)
+    - if digits starts with country code (e.g. 91...) add '+'
+    - otherwise add '+' if missing
+    """
+    if not digits:
+        return ""
+    if digits.startswith("+"):
+        return "+" + "".join(ch for ch in digits if ch.isdigit())
+    if len(digits) == 10:
+        return f"+91{digits}"
+    if 10 < len(digits) <= 15:
+        return f"+{digits}"
+    return digits
+
+
+class ActionShowMenu(Action):
     def name(self) -> str:
         return "action_show_menu"
 
@@ -127,6 +170,8 @@ class action_show_menu(Action):
 
         text_message = "\n".join(lines).strip()
         dispatcher.utter_message(text=text_message)
+
+        # optional UI cards
         cards = []
         MAX_CARDS = 40
         added = 0
@@ -143,8 +188,8 @@ class action_show_menu(Action):
                     "text": f"₹{price}" if price is not None else "",
                     "category": cat_key,
                     "buttons": [
-                        {"title": "Details", "payload": f"/ask_details{{\"dish_name\":\"{title}\"}}"},
-                        {"title": f"Order — ₹{price}" if price is not None else "Order", "payload": f"/order_item{{\"dish_name\":\"{title}\"}}"}
+                        {"title": "Details", "payload": f'/ask_details{{"dish_name":"{title}"}}'},
+                        {"title": f"Order — ₹{price}" if price is not None else "Order", "payload": f'/order_item{{"dish_name":"{title}"}}'}
                     ]
                 }
                 cards.append(card)
@@ -159,33 +204,6 @@ class action_show_menu(Action):
         return []
 
 
-def _normalize_phone_to_e164(phone_raw: str) -> str:
-    """
-    Convert a user-provided phone string into an E.164-like string.
-    Heuristics:
-      - if phone starts with '+', keep plus and digits
-      - otherwise extract digits; if length == 10 -> assume India and prefix +91
-      - if digits start with '91' and length >= 11 -> prefix '+'
-      - otherwise prefix '+' (best-effort)
-    """
-    if not phone_raw:
-        return ""
-    s = str(phone_raw).strip()
-    if s.startswith("+"):
-        # allow +91..., or other international numbers
-        return "+" + "".join(ch for ch in s if ch.isdigit())
-    digits = "".join(ch for ch in s if ch.isdigit())
-    # strip leading zeros
-    while digits.startswith("0"):
-        digits = digits[1:]
-    if len(digits) == 10:
-        return "+91" + digits
-    if digits.startswith("91") and len(digits) >= 11:
-        return "+" + digits
-    # fallback
-    return "+" + digits
-
-
 class ActionSaveBooking(Action):
     def name(self) -> Text:
         return "action_save_booking"
@@ -197,13 +215,16 @@ class ActionSaveBooking(Action):
 
         ensure_backend_dirs()
 
-        # read slots (they may be None if not provided)
+        # read slots (they may be None)
         name = tracker.get_slot("name") or ""
-        phone = tracker.get_slot("phone") or ""
+        raw_phone = tracker.get_slot("phone") or ""
         date = tracker.get_slot("date") or ""
         time = tracker.get_slot("time") or ""
         party_size = tracker.get_slot("party_size") or ""
         special_request = tracker.get_slot("special_request") or ""
+
+        # normalize for storage and for send
+        phone_digits = _normalize_digits(str(raw_phone))
 
         # generate booking id
         booking_id = f"BKG{random.randint(1000, 9999)}"
@@ -211,78 +232,69 @@ class ActionSaveBooking(Action):
         booking_record = {
             "booking_id": booking_id,
             "name": name,
-            "phone": phone,
+            "phone": phone_digits,
             "date": date,
             "time": time,
             "party_size": party_size,
-            "special_request": special_request
+            "special_request": special_request,
+            "created_at": datetime.utcnow().isoformat() + "Z"
         }
 
-        # Load existing bookings safely (expecting dict with "bookings": [])
-        try:
-            with open(BOOKINGS_FILE, "r", encoding="utf-8") as f:
-                bookings_data = json.load(f)
-        except (json.JSONDecodeError, FileNotFoundError):
-            bookings_data = {"bookings": []}
-
-        if isinstance(bookings_data, dict) and "bookings" in bookings_data and isinstance(bookings_data["bookings"], list):
-            bookings = bookings_data["bookings"]
-        else:
-            bookings = []
-
+        data = load_bookings()
+        bookings = data.get("bookings", [])
         bookings.append(booking_record)
-        atomic_write_json(BOOKINGS_FILE, {"bookings": bookings})
+        save_bookings(bookings)
 
-        # Inform the chat
         dispatcher.utter_message(text=f"Saved booking {booking_id} for {name}.")
 
-        # --- send SMS via Twilio ---
-        # Twilio credentials must be set in environment variables:
-        # TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER
-        account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
-        auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
-        from_number = os.environ.get("TWILIO_FROM_NUMBER")  # e.g. "+1XXXXXXXXXX" or "+91XXXXXXXXXX"
+        # --- send SMS via Twilio (optional) ---
+        twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
+        twilio_from = os.getenv("TWILIO_FROM_NUMBER")  # must be E.164 (e.g. +1415...)
 
-        sms_body = (
-            f"Hi {name}, your table is booked!\n"
-            f"Booking ID: {booking_id}\n"
-            f"Date: {date}\n"
-            f"Time: {time}\n"
-            f"Party size: {party_size}\n"
-            f"- Thank you"
-        )
-
-        if account_sid and auth_token and from_number:
-            to_number = _normalize_phone_to_e164(phone)
+        sms_sent = False
+        sms_error = None
+        if TwilioClient and twilio_sid and twilio_token and twilio_from and phone_digits:
             try:
-                client = Client(account_sid, auth_token)
-                message = client.messages.create(
-                    body=sms_body,
-                    from_=from_number,
-                    to=to_number,
+                client = TwilioClient(twilio_sid, twilio_token)
+                to_number = _format_phone_for_send(phone_digits)
+                message_body = (
+                    f"Booking confirmed: {booking_id}\n"
+                    f"Name: {name}\n"
+                    f"Date: {date} Time: {time}\n"
+                    f"Party: {party_size}\n"
+                    f"Requests: {special_request or 'None'}"
                 )
-                logger.info(f"Twilio SMS sent: sid={getattr(message, 'sid', None)} to={to_number}")
+                msg = client.messages.create(body=message_body, from_=twilio_from, to=to_number)
+                logger.info("Twilio message sent sid=%s to=%s", getattr(msg, "sid", None), to_number)
+                sms_sent = True
             except Exception as e:
-                logger.exception("Failed to send SMS via Twilio:")
-                # don't fail the action if SMS fails; inform user in chat optionally
-                dispatcher.utter_message(text="(Warning) Confirmation SMS could not be sent.")
+                logger.exception("Failed to send SMS via Twilio")
+                sms_error = str(e)
         else:
-            logger.info("Twilio credentials or from number not set - skipping SMS send.")
+            logger.info("Twilio not configured or Twilio package not installed; skipping SMS.")
 
-        # Return slot updates so utter_confirm_booking can access them
+        if sms_sent:
+            dispatcher.utter_message(text=f"A confirmation SMS was sent to {phone_digits}.")
+        elif sms_error:
+            dispatcher.utter_message(text=f"Booking saved, but failed to send SMS: {sms_error}")
+        else:
+            dispatcher.utter_message(text="Booking saved. (SMS not sent — Twilio not configured.)")
+
+        # Return slot updates so utter_confirm_booking can use them
         return [
             SlotSet("booking_confirmed", True),
             SlotSet("booking_id", booking_id),
             SlotSet("name", name),
-            SlotSet("phone", phone),
+            SlotSet("phone", phone_digits),
             SlotSet("date", date),
             SlotSet("time", time),
             SlotSet("party_size", party_size),
-            SlotSet("special_request", special_request)
+            SlotSet("special_request", special_request),
         ]
 
 
-class action_location(Action):
+class ActionLocation(Action):
     def name(self) -> str:
         return "action_location"
 
@@ -300,13 +312,13 @@ class action_location(Action):
         return []
 
 
-class action_additional_info(Action):
+class ActionAdditionalInfo(Action):
     def name(self) -> str:
         return "action_additional_info"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict) -> List[Dict]:
         hours = "Daily 07:30 AM - 01:30 AM (next day)"
-        cancellation = "no cancellation available"
+        cancellation = "No cancellation available."
         payment = "We accept cash and digital payments (UPI, cards)."
         parking = "Limited parking available near the restaurant."
 

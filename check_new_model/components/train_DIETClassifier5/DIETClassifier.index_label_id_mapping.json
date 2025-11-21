@@ -1,0 +1,12 @@
+{
+  "0": "affirm",
+  "1": "ask_info",
+  "2": "ask_location",
+  "3": "ask_price",
+  "4": "book_table",
+  "5": "deny",
+  "6": "goodbye",
+  "7": "greet",
+  "8": "inform",
+  "9": "show_menu"
+}

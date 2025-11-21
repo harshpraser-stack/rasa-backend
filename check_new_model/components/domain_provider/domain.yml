@@ -1,0 +1,132 @@
+version: '3.1'
+intents:
+- affirm
+- ask_info
+- ask_location
+- ask_price
+- book_table
+- deny
+- goodbye
+- greet
+- inform
+- show_menu
+entities:
+- dish_name
+- date
+- time
+- party_size
+- phone
+- name
+- special_request
+slots:
+  name:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_text
+      conditions:
+      - active_loop: booking_form
+        requested_slot: name
+  phone:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_entity
+      entity: phone
+      conditions:
+      - active_loop: booking_form
+        requested_slot: phone
+    - type: from_text
+      conditions:
+      - active_loop: booking_form
+        requested_slot: phone
+  date:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_text
+      conditions:
+      - active_loop: booking_form
+        requested_slot: date
+  time:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_text
+      conditions:
+      - active_loop: booking_form
+        requested_slot: time
+  party_size:
+    type: text
+    influence_conversation: true
+    mappings:
+    - type: from_text
+      conditions:
+      - active_loop: booking_form
+        requested_slot: party_size
+  special_request:
+    type: text
+    influence_conversation: false
+    mappings:
+    - type: from_text
+      conditions:
+      - active_loop: booking_form
+        requested_slot: special_request
+  booking_confirmed:
+    type: bool
+    influence_conversation: true
+    mappings:
+    - type: from_intent
+      intent: affirm
+      value: true
+    - type: from_intent
+      intent: deny
+      value: false
+  booking_id:
+    type: text
+    influence_conversation: false
+    mappings: []
+responses:
+  utter_greet:
+  - text: Hello! I can show the menu, help you book a table, or give location info. What do you need?
+  utter_goodbye:
+  - text: Goodbye! Have a great day.
+  utter_ask_name:
+  - text: What's the name for the booking?
+  utter_ask_phone:
+  - text: 'Please provide a 10-digit phone number (example: 9876543210).'
+  utter_ask_date:
+  - text: 'Please enter the booking date in DD/MM/YYYY format (example: 20/11/2025).'
+  utter_ask_time:
+  - text: 'Please enter time in HH:MM (24-hour) format (example: 19:30).'
+  utter_ask_party_size:
+  - text: How many people will be coming?
+  utter_ask_special_request:
+  - text: Any special requests? If none, reply 'no'.
+  utter_menu_summary:
+  - text: Here is our menu. Tell me if you want details or the price of any dish.
+  utter_location:
+  - text: Our address is 123 Example Street, MyCity. Want a Google Maps link?
+  utter_additional_info:
+  - text: We are open daily 07:30–01:30. Call 2 hours before to cancel.
+  utter_confirm_booking:
+  - text: |
+      Thanks {name}! Your booking is confirmed for {date} at {time} for {party_size} people. We will call you at {phone} if needed.
+actions:
+- action_show_menu
+- action_save_booking
+- action_location
+- action_additional_info
+- validate_booking_form
+forms:
+  booking_form:
+    required_slots:
+    - name
+    - phone
+    - date
+    - time
+    - party_size
+    - special_request
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
