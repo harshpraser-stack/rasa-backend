@@ -19,9 +19,11 @@ WAIT_TIMEOUT="${WAIT_TIMEOUT:-30}"   # seconds
 WAIT_INTERVAL="${WAIT_INTERVAL:-1}"  # seconds between checks
 
 # Start action server (rasa-sdk) in background
-log "Starting action server on ${ACTION_PORT}..."
-rasa run actions --port "${ACTION_PORT}" &
+# Start action server (rasa-sdk) in background and bind to localhost so Render doesn't expose it
+log "Starting action server on ${ACTION_HOST}:${ACTION_PORT}..."
+rasa run actions --host "${ACTION_HOST}" --port "${ACTION_PORT}" --debug &
 ACTION_PID=$!
+
 
 # Wait for action server to become healthy
 log "Waiting up to ${WAIT_TIMEOUT}s for action server to respond at ${ACTION_HEALTH_URL}..."
