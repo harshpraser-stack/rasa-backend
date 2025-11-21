@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Render provides PORT. Default to 5005 if not set (use Render's $PORT in production).
 PORT="${PORT:-${1:-5005}}"
 MODEL_DIR="${MODEL_DIR:-models}"
 
@@ -35,9 +34,9 @@ while true; do
   SECONDS_WAITED=$((SECONDS_WAITED + WAIT_INTERVAL))
 done
 
-# Start Rasa server (main process) bound to the Render port
+# Start Rasa server (use --interface to bind to 0.0.0.0)
 log "Starting Rasa HTTP server on 0.0.0.0:${PORT} (model dir: ${MODEL_DIR})..."
-rasa run --enable-api --cors "*" --model "${MODEL_DIR}" --host 0.0.0.0 --port "${PORT}" &
+rasa run --enable-api --cors "*" --model "${MODEL_DIR}" --interface 0.0.0.0 --port "${PORT}" &
 RASA_PID=$!
 
 # Forward SIGINT/SIGTERM to children
